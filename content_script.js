@@ -1,34 +1,54 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'export_friends') {
     const friends = [];
-      const friendCards = document.querySelectorAll(
-        "div.x6s0dn4.x1lq5wgf.xgqcy7u.x30kzoy.x9jhf4c.x1olyfxc.x9f619.x78zum5.x1e56ztr.xyamay9.x1pi30zi.x1l90r2v.x1swvt13.x1gefphp"
-      );
-      friendCards.forEach((card) => {
-        let name, photo, profileLink
-        try {
-            name =
-            card.querySelector('a span[dir="auto"]').innerText;
-            photo = card.querySelector("img").src;
-            profileLink = card.querySelector("a").href;
-        } catch (error) {
-            // console.log("card: ", card);   
-            // console.log(error)
-            return
-        }
+    const friendCards = document.querySelectorAll(
+      "div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.x2lah0s.x1qughib.x6s0dn4.xozqiw3.x1q0g3np"
+    );
+    friendCards.forEach((card) => {
+      let name, photo, profileLink;
+      try {
+        const names = card.querySelectorAll(
+          "span.x1lliihq.x193iq5w.x6ikm8r.x10wlt62.xlyipyv.xuxw1ft"
+        );
+        originalName = (names[1]?.innerText || names[0]?.innerText).replace(
+          /,/g,
+          " "
+        );
 
+        // 查找 \n 的位置
+        const newlinePosition = originalName.indexOf("\n");
+        // 如果找到 \n，則截取從字符串開始到 \n 位置的子字符串
+        name =
+          newlinePosition !== -1
+            ? originalName.substring(0, newlinePosition)
+            : originalName;
+        if (newlinePosition !== -1) {
+          console.log({
+            name,
+            originalName,
+          });
+        }
+        photo = card.querySelector("img").src;
+        profileLink = card.querySelector("a").href;
+      } catch (error) {
+        return;
+      }
       friends.push({ name, photo, profileLink });
     });
-      
-      console.log(friends);
 
-    const csvContent = 'Name,Photo,ProfileLink\n' + friends.map((friend) => `${friend.name},${friend.photo},${friend.profileLink}`).join('\n');
-    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    console.log(friends);
+
+    const csvContent =
+      "Name,ProfileLink,Photo\n" +
+      friends
+        .map((friend) => `${friend.name},${friend.profileLink},${friend.photo}`)
+        .join("\n");
+    const csvBlob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const csvUrl = URL.createObjectURL(csvBlob);
-    const downloadLink = document.createElement('a');
+    const downloadLink = document.createElement("a");
     downloadLink.href = csvUrl;
-    downloadLink.download = 'facebook_friends.csv';
-    downloadLink.style.display = 'none';
+    downloadLink.download = "facebook_friends.csv";
+    downloadLink.style.display = "none";
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
